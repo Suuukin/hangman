@@ -63,6 +63,9 @@ def position_check(guess_letter):
 
 
 def submit_guess(letter):
+    """Checks if the letter guessed is in the word and 
+    if so fills the slots in the word where the letter is.
+    If not in the word draws more of the hangman."""
     if State.incorrect_guesses >= 6:
         State.game_over = True
         print(State.game_over)
@@ -84,19 +87,25 @@ def submit_guess(letter):
 
 
 def btn_op(text):
+    """Updates the label for normal keyboard,
+    or does specific function for special buttons."""
     if not State.game_over:
         label = State.guess_display
+
         if text == "BACKSPACE":
             State.guess = " "
             update_label(label, text=" ")
+
         elif text == "ENTER":
             submit_guess(State.guess)
+
         else:
-            update_label(label, text=text)
             State.guess = text
+            update_label(label, text=text)
 
 
 def button_binder(frame, text):
+    """Binds a specific keyboard key to a button in the gui."""
     if text == "ENTER":
         frame.bind("<Return>", lambda event: btn_op(text))
     elif text == "BACKSPACE":
