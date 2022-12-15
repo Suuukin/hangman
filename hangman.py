@@ -16,6 +16,7 @@ class State:
     guess = ""
     game_over = False
     guess_display = None
+    incorrect_guesses = 0
 
 
 print(State.word)
@@ -55,13 +56,27 @@ def position_check(guess_letter):
     for i, location in enumerate(State.letters):
         if State.letters[i] == guess_letter:
             positions.append(i + 1)
-    return positions
+    if positions == []:
+        return None
+    else:
+        return positions
 
 
 def submit_guess(letter):
-    positions = position_check(State.guess)
+    if State.incorrect_guesses >= 6:
+        State.game_over = True
+        print(State.game_over)
+        return
+
     button = State.buttons[letter]
     update_keyboard(button, color='grey', state='disabled')
+    positions = position_check(State.guess)
+
+    if positions is None:
+        State.incorrect_guesses += 1
+        print(State.incorrect_guesses)
+        return
+
     for position in positions:
         label = State.labels[position]
         update_label(label, text=State.guess)
@@ -69,15 +84,16 @@ def submit_guess(letter):
 
 
 def btn_op(text):
-    label = State.guess_display
-    if text == "BACKSPACE":
-        update_label(label, text=text)
-        State.guess = " "
-    elif text == "ENTER":
-        submit_guess(State.guess)
-    else:
-        update_label(label, text=text)
-        State.guess = text
+    if not State.game_over:
+        label = State.guess_display
+        if text == "BACKSPACE":
+            State.guess = " "
+            update_label(label, text=" ")
+        elif text == "ENTER":
+            submit_guess(State.guess)
+        else:
+            update_label(label, text=text)
+            State.guess = text
 
 
 def button_binder(frame, text):
@@ -130,10 +146,7 @@ def main():
     enter_btn = btn_maker(State.keyboard_frames[2], "ENTER")
     enter_btn.grid(row=1, column=9)
     button_binder(window, "ENTER")
-    clear_btn = btn_maker(State.keyboard_frames[0], "CE")
-    clear_btn.grid(row=1, column=11)
     button_binder(window, "BACKSPACE")
-    button_binder(window, "CE")
 
     window.mainloop()
 
