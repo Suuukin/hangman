@@ -22,6 +22,7 @@ class State:
     incorrect_guesses = 0
     hangman_images = {}
     hangman_label = None
+    correct_guesses = 0
 
 
 print(State.word)
@@ -79,28 +80,47 @@ def position_check(guess_letter):
         return positions
 
 
+def clear_guess(label):
+    State.guess = None
+    update_label(label, text=State.guess)
+
 def submit_guess(letter):
     """Checks if the letter guessed is in the word and
     if so fills the slots in the word where the letter is.
     If not in the word draws more of the hangman."""
+
+    if State.guess is None:
+        return
+
     if State.incorrect_guesses >= 6:
         State.game_over = True
         print(State.game_over)
         return
 
+
     button = State.buttons[letter]
     positions = position_check(State.guess)
+    window.unbind(letter)
+
 
     if positions is None:
         State.incorrect_guesses += 1
         update_keyboard(button, color="grey", state="disabled")
         image_selector(State.incorrect_guesses)
+        clear_guess(State.guess_display)
         return
+    else:
+        State.correct_guesses += 1
 
     for position in positions:
         label = State.labels[position]
         update_label(label, text=State.guess)
         update_keyboard(button, color="lime", state="disabled")
+
+    if State.correct_guesses >= len(State.letters):
+        State.game_over = True
+        print(State.game_over, State.correct_guesses)
+    clear_guess(State.guess_display)
 
 
 def btn_op(text):
@@ -138,7 +158,8 @@ def main():
     global GRID_FONT
     global KEYBOARD_FONT
     global SCRIPT_DIR
-    global IMAGE_PATH 
+    global IMAGE_PATH
+    global window 
     window = tk.Tk()
     window.title("Hangman")
     window.resizable(False, False)
