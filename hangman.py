@@ -24,7 +24,7 @@ class State:
     incorrect_guesses = 0
     hangman_images = {}
     hangman_label = None
-    correct_guesses = 0
+    correct_letters = 0 # keeps track of how many letters are filled
     guesses = []  # things that have already been guessed
 
 
@@ -33,7 +33,6 @@ print(State.word)
 
 def image_loader(name):
     image_dir = os.path.join(IMAGE_PATH, name)
-    print(image_dir)
     return ImageTk.PhotoImage(file=image_dir)
 
 
@@ -111,6 +110,10 @@ def submit_guess(letter):
         print(State.game_over)
         return
 
+    if State.correct_letters >= len(State.letters):
+        State.game_over = True
+        return
+
     button = State.buttons[letter]
     positions = position_check(State.guess)
     State.guesses.append(letter)
@@ -121,18 +124,19 @@ def submit_guess(letter):
         image_selector(State.incorrect_guesses)
         clear_guess(State.guess_display)
         return
-    else:
-        State.correct_guesses += 1
 
     for position in positions:
         label = State.labels[position]
         update_label(label, text=State.guess)
         update_keyboard(button, color="lime", state="disabled")
 
-    if State.correct_guesses >= len(State.letters):
-        State.game_over = True
-        print(State.game_over, State.correct_guesses)
-    clear_guess(State.guess_display)
+    for i, bar in enumerate(State.letters):
+        label = State.labels[i+1]
+        text = label.cget("text")
+        if text == letter:
+            State.correct_letters += 1
+            print(State.correct_letters)
+            
 
 
 def btn_op(text):
@@ -142,7 +146,7 @@ def btn_op(text):
         label = State.guess_display
 
         if text == "BACKSPACE":
-            State.guess = " "
+            State.guess = None
             update_label(label, text=" ")
 
         elif text == "ENTER":
