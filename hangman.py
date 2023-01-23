@@ -24,7 +24,7 @@ class State:
     incorrect_guesses = 0
     hangman_images = {}
     hangman_label = None
-    correct_letters = 0 # keeps track of how many letters are filled
+    correct_letters = 0  # keeps track of how many letters are filled
     guesses = []  # things that have already been guessed
 
 
@@ -103,13 +103,6 @@ def submit_guess(letter):
         # checks if you are guessing something you already guessed
         return
 
-    if State.incorrect_guesses >= 6:
-        # checks if you lose the game
-        # from too many incorrect guesses
-        State.game_over = True
-        print(State.game_over)
-        return
-
     if State.correct_letters >= len(State.letters):
         State.game_over = True
         return
@@ -125,23 +118,28 @@ def submit_guess(letter):
         clear_guess(State.guess_display)
         return
 
-    for position in positions:
+    for position in positions:  
         label = State.labels[position]
         update_label(label, text=State.guess)
         update_keyboard(button, color="lime", state="disabled")
 
     for i, bar in enumerate(State.letters):
-        label = State.labels[i+1]
+        label = State.labels[i + 1]
         text = label.cget("text")
         if text == letter:
             State.correct_letters += 1
             print(State.correct_letters)
-            
 
 
 def btn_op(text):
     """Updates the label for normal keyboard,
-    or does specific function for special buttons."""
+    or does specific function for special buttons."""    
+    if State.incorrect_guesses >= 6:
+        # checks if you lose the game
+        # from too many incorrect guesses
+        State.game_over = True
+        return
+
     if not State.game_over:
         label = State.guess_display
 
