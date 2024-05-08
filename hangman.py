@@ -1,10 +1,9 @@
 import tkinter as tk
 import tkinter.font as font
-import wordlist
+import json
 import random
 import os
-from PIL import ImageTk, Image
-
+from PIL import Image, ImageTk
 
 # flake8: noqa
 
@@ -12,25 +11,23 @@ from PIL import ImageTk, Image
 class State:
     labels = {}  # {point, label}
     buttons = {}  # {key_text, button}
-    word = random.choice(wordlist.wordlist)
-    letters = list(word)
-    keyboard_frames = {}
+    word = ""
+    wordlist = None
+    letters = ""
+    keyboard_frames = {}  # dict for frames that hold they keyboard rows
     current_x = 1
-    guess = ""
+    guess = ""  # what is being guessed
     game_over = False
     guess_display = None
     incorrect_guesses = 0
     hangman_images = {}
     hangman_label = None
-    correct_guesses = 0
-
-
-print(State.word)
+    correct_letters = 0  # keeps track of how many letters are filled
+    guesses = []  # things that have already been guessed
 
 
 def image_loader(name):
     image_dir = os.path.join(IMAGE_PATH, name)
-    print(image_dir)
     return ImageTk.PhotoImage(file=image_dir)
 
 
@@ -59,10 +56,12 @@ def btn_maker(frame, text):
 
 
 def update_label(label, text=None, color=None, image=None):
+    """Updates the inputted label's, text, color, or image."""
     label.configure(text=text, bg=color, image=image)
 
 
 def update_keyboard(button, color=None, state=None):
+    """Colors the keyboard green or grey."""
     if button["bg"] != "green":
         button.configure(bg=color, state=state)
 
@@ -81,8 +80,10 @@ def position_check(guess_letter):
 
 
 def clear_guess(label):
+    """Resets guess variable and clears guess_display."""
     State.guess = None
     update_label(label, text=State.guess)
+
 
 def submit_guess(letter):
     """Checks if the letter guessed is in the word and
@@ -90,18 +91,27 @@ def submit_guess(letter):
     If not in the word draws more of the hangman."""
 
     if State.guess is None:
+        # checks if you are trying to guess nothing
+        return
+
+    if letter in State.guesses:
+        # checks if you are guessing something you already guessed
         return
 
     if State.incorrect_guesses >= 6:
+        # checks if you lose the game
+        # from too many incorrect guesses
         State.game_over = True
-        print(State.game_over)
+        print(f"Game has ended, the word was {State.word}")
         return
 
+    if State.correct_letters >= len(State.letters):
+        State.game_over = True
+        return
 
     button = State.buttons[letter]
     positions = position_check(State.guess)
-    window.unbind(letter)
-
+    State.guesses.append(letter)
 
     if positions is None:
         State.incorrect_guesses += 1
@@ -109,18 +119,17 @@ def submit_guess(letter):
         image_selector(State.incorrect_guesses)
         clear_guess(State.guess_display)
         return
-    else:
-        State.correct_guesses += 1
 
     for position in positions:
         label = State.labels[position]
         update_label(label, text=State.guess)
         update_keyboard(button, color="lime", state="disabled")
 
-    if State.correct_guesses >= len(State.letters):
-        State.game_over = True
-        print(State.game_over, State.correct_guesses)
-    clear_guess(State.guess_display)
+    for i, bar in enumerate(State.letters):
+        label = State.labels[i + 1]
+        text = label.cget("text")
+        if text == letter:
+            State.correct_letters += 1
 
 
 def btn_op(text):
@@ -130,7 +139,7 @@ def btn_op(text):
         label = State.guess_display
 
         if text == "BACKSPACE":
-            State.guess = " "
+            State.guess = None
             update_label(label, text=" ")
 
         elif text == "ENTER":
@@ -159,7 +168,7 @@ def main():
     global KEYBOARD_FONT
     global SCRIPT_DIR
     global IMAGE_PATH
-    global window 
+
     window = tk.Tk()
     window.title("Hangman")
     window.resizable(False, False)
@@ -179,6 +188,13 @@ def main():
         "leg2.png",
     ]
 
+    wordlist_path = os.path.join(SCRIPT_DIR, "wordlist.json")
+    with open(wordlist_path) as fp:
+        State.wordlist = wordlist = json.load(fp)
+        while len(State.word) <= 3:
+            State.word = word = random.choice(wordlist)
+        State.letters = list(word)
+
     for i, name in enumerate(IMAGE_NAMES):
         State.hangman_images[i] = image_loader(name)
 
@@ -186,15 +202,13 @@ def main():
         window, image=State.hangman_images[State.incorrect_guesses]
     )
 
-    State.hangman_label.grid(row=0, column=1)   
+    State.hangman_label.grid(row=0, column=1)
 
     State.guess_display = guess_display = label_maker(window)
     guess_display.grid(row=2, column=1)
 
-
     guess_area = tk.Frame(window, width=300, height=200, bg="honeydew2")
     guess_area.grid(row=1, column=1)
-
 
     for x, letter in enumerate(State.letters):
         label = label_maker(guess_area)
